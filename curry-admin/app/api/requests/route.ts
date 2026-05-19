@@ -1,0 +1,12 @@
+import { NextResponse } from 'next/server';
+import { mockTrialRequests } from '@/lib/mockData';
+
+export async function GET() {
+  return NextResponse.json(mockTrialRequests);
+}
+
+export async function POST(request: Request) {
+  const data = await request.json();
+  const newItem = { id: Date.now().toString(), status: 'pending', ...data };
+  return NextResponse.json(newItem, { status: 201 });
+}
