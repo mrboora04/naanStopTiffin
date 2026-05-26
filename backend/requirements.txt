@@ -1,5 +1,24 @@
+# NaanStop Tiffin — Backend Dependencies
+
+# ── Web framework ──────────────────────────────────────────────────────────────
 fastapi
 uvicorn[standard]
+python-multipart
+
+# ── Database ───────────────────────────────────────────────────────────────────
 sqlalchemy
 pydantic
-python-multipart
+
+# ── API Patterns (Skill #2) ────────────────────────────────────────────────────
+slowapi          # Rate limiting (token bucket, per-IP)
+httpx            # Async HTTP client (for testing and future integrations)
+
+# ── AI Data Engineering (Skill #3) ────────────────────────────────────────────
+sentence-transformers    # Free local embeddings (all-MiniLM-L6-v2, 384-dim)
+chromadb                 # In-process vector store with disk persistence
+pandas                   # Structured data export and ML feature tables
+numpy                    # Numerical operations for ML pipeline
+
+# ── ML Classifiers (Logistic Regression — Phase 3) ────────────────────────────
+scikit-learn             # LogisticRegression, StandardScaler, confusion_matrix
+joblib                   # Model persistence (.pkl) — save/load trained classifiers

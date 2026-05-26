@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Text
+from sqlalchemy import Column, String, Integer, Text, Boolean
 from database import Base
 
 
@@ -13,3 +13,5 @@ class Delivery(Base):
     delivery_time = Column(String,  default="")
     route_order   = Column(Integer, default=0)
     notes         = Column(Text,    default="")
+    day_of_week   = Column(String,  default="")     # monday|tuesday|... (logistic regression feature)
+    was_late      = Column(Boolean, nullable=True)   # NULL=unlabeled | True=late | False=on-time (training label)

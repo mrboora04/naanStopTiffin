@@ -38,47 +38,74 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
     headers: { "Content-Type": "application/json" },
     ...options,
   });
-  if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
+  if (!res.ok) {
+    // Parse RFC 7807 Problem Details if available
+    let detail = `API error ${res.status}: ${path}`;
+    try {
+      const body = await res.json();
+      if (body.detail) detail = body.detail;
+      else if (body.title) detail = `${body.title}: ${body.detail ?? ""}`;
+    } catch {}
+    throw new Error(detail);
+  }
+  // 204 No Content — return empty
+  if (res.status === 204) return undefined as unknown as T;
   return res.json() as Promise<T>;
+}
+
+/**
+ * List fetch: extracts `.items` from paginated responses.
+ * All /api/v1/* list endpoints return { items, count, next_cursor, has_more }.
+ */
+async function apiList<T>(path: string): Promise<T[]> {
+  const data = await apiFetch<{ items: T[] } | T[]>(path);
+  if (Array.isArray(data)) return data;
+  return (data as { items: T[] }).items ?? [];
 }
 
 /** Typed API client — import and use anywhere you need direct calls */
 export const api = {
   // Members
-  getMembers:      ()              => apiFetch<Member[]>("/api/members"),
-  createMember:    (d: Omit<Member, "id">) => apiFetch<Member>("/api/members", { method: "POST", body: JSON.stringify(d) }),
-  updateMember:    (id: string, d: Partial<Member>) => apiFetch<Member>(`/api/members/${id}`, { method: "PUT", body: JSON.stringify(d) }),
-  deleteMember:    (id: string)    => apiFetch<void>(`/api/members/${id}`, { method: "DELETE" }),
+  getMembers:      ()              => apiList<Member>("/api/v1/members"),
+  createMember:    (d: Omit<Member, "id">) => apiFetch<Member>("/api/v1/members", { method: "POST", body: JSON.stringify(d) }),
+  updateMember:    (id: string, d: Partial<Member>) => apiFetch<Member>(`/api/v1/members/${id}`, { method: "PUT", body: JSON.stringify(d) }),
+  deleteMember:    (id: string)    => apiFetch<void>(`/api/v1/members/${id}`, { method: "DELETE" }),
 
   // Deliveries
-  getDeliveries:   ()              => apiFetch<Delivery[]>("/api/deliveries"),
-  createDelivery:  (d: Omit<Delivery, "id">) => apiFetch<Delivery>("/api/deliveries", { method: "POST", body: JSON.stringify(d) }),
-  updateDelivery:  (id: string, d: Partial<Delivery>) => apiFetch<Delivery>(`/api/deliveries/${id}`, { method: "PUT", body: JSON.stringify(d) }),
+  getDeliveries:   ()              => apiList<Delivery>("/api/v1/deliveries"),
+  createDelivery:  (d: Omit<Delivery, "id">) => apiFetch<Delivery>("/api/v1/deliveries", { method: "POST", body: JSON.stringify(d) }),
+  updateDelivery:  (id: string, d: Partial<Delivery>) => apiFetch<Delivery>(`/api/v1/deliveries/${id}`, { method: "PUT", body: JSON.stringify(d) }),
 
   // Schedule
-  getSchedule:     ()              => apiFetch<ScheduleDay[]>("/api/schedule"),
-  updateScheduleDay: (id: string, d: Partial<ScheduleDay>) => apiFetch<ScheduleDay>(`/api/schedule/${id}`, { method: "PUT", body: JSON.stringify(d) }),
+  getSchedule:     ()              => apiList<ScheduleDay>("/api/v1/schedule"),
+  updateScheduleDay: (id: string, d: Partial<ScheduleDay>) => apiFetch<ScheduleDay>(`/api/v1/schedule/${id}`, { method: "PUT", body: JSON.stringify(d) }),
 
   // Pricing
-  getPricingPlans: ()              => apiFetch<PricingPlan[]>("/api/pricing"),
-  updatePlan:      (id: string, d: Partial<PricingPlan>) => apiFetch<PricingPlan>(`/api/pricing/${id}`, { method: "PUT", body: JSON.stringify(d) }),
+  getPricingPlans: ()              => apiList<PricingPlan>("/api/v1/pricing"),
+  updatePlan:      (id: string, d: Partial<PricingPlan>) => apiFetch<PricingPlan>(`/api/v1/pricing/${id}`, { method: "PUT", body: JSON.stringify(d) }),
 
   // Trial Requests
-  getRequests:     ()              => apiFetch<TrialRequest[]>("/api/requests"),
-  updateRequest:   (id: string, d: Partial<TrialRequest>) => apiFetch<TrialRequest>(`/api/requests/${id}`, { method: "PUT", body: JSON.stringify(d) }),
+  getRequests:     ()              => apiList<TrialRequest>("/api/v1/requests"),
+  updateRequest:   (id: string, d: Partial<TrialRequest>) => apiFetch<TrialRequest>(`/api/v1/requests/${id}`, { method: "PUT", body: JSON.stringify(d) }),
 
   // Feedback
-  getFeedback:     ()              => apiFetch<Feedback[]>("/api/comments"),
-  updateFeedback:  (id: string, d: Partial<Feedback>) => apiFetch<Feedback>(`/api/comments/${id}`, { method: "PUT", body: JSON.stringify(d) }),
+  getFeedback:     ()              => apiList<Feedback>("/api/v1/comments"),
+  updateFeedback:  (id: string, d: Partial<Feedback>) => apiFetch<Feedback>(`/api/v1/comments/${id}`, { method: "PUT", body: JSON.stringify(d) }),
 
   // Pilot
-  getPilots:       ()              => apiFetch<PilotProgram[]>("/api/pilot"),
+  getPilots:       ()              => apiList<PilotProgram>("/api/v1/pilot"),
 
   // Payments
-  getPayments:     ()              => apiFetch<Payment[]>("/api/payments"),
+  getPayments:     ()              => apiList<Payment>("/api/v1/payments"),
 
   // Dashboard
-  getDashboard:    ()              => apiFetch<{ activeMembers: number; totalMembers: number; totalDeliveries: number }>("/api/dashboard"),
+  getDashboard:    ()              => apiFetch<{ activeMembers: number; totalMembers: number; totalDeliveries: number }>("/api/v1/dashboard"),
+
+  // AI endpoints
+  menuSearch:      (q: string, k?: number) => apiFetch<unknown>(`/api/v1/ai/menu-search?q=${encodeURIComponent(q)}${k ? `&k=${k}` : ""}`),
+  deliveryPredict: (routeOrder: number)    => apiFetch<unknown>(`/api/v1/ai/delivery-predict?route_order=${routeOrder}`),
+  aiStatus:        ()                      => apiFetch<unknown>("/api/v1/ai/status"),
+  reindex:         ()                      => apiFetch<unknown>("/api/v1/ai/reindex", { method: "POST" }),
 };
 
 // ── Context shape ────────────────────────────────────────────────────────────

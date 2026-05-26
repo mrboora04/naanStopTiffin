@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional, Literal
 
 
@@ -12,9 +12,16 @@ class MemberBase(BaseModel):
     plan_id:            Optional[str] = None
     renewal_date:       Optional[str] = None
     join_date:          Optional[str] = None
-    allergies:          str = ""
-    delivery_notes:     str = ""
-    emergency_contact:  str = ""
+    # These are optional in the DB (NULL-able) — coerce None → ""
+    allergies:          Optional[str] = ""
+    delivery_notes:     Optional[str] = ""
+    emergency_contact:  Optional[str] = ""
+
+    @field_validator("allergies", "delivery_notes", "emergency_contact", mode="before")
+    @classmethod
+    def coerce_none_to_empty(cls, v):
+        """Convert NULL DB values to empty string so API always returns a string."""
+        return v if v is not None else ""
 
 
 class MemberCreate(MemberBase):
@@ -28,3 +35,4 @@ class MemberUpdate(MemberBase):
 class MemberOut(MemberBase):
     id: str
     model_config = {"from_attributes": True}
+
