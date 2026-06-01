@@ -35,6 +35,12 @@ Rank dishes and add-ons based on taste scores, repeat orders, and dietary prefer
 3. Demand forecasting model
 Predict breakfast, lunch, and dinner demand by town and weekday.
 
+4. Surplus Food Matcher (Flash Sales)
+Uses location and order history to instantly push discounted flash sales to nearby customers when the kitchen has excess prepped food, minimizing food waste.
+
+5. Subscription Churn/Pause Predictor
+Predicts when a regular subscriber is experiencing fatigue (e.g., missed meals) and proactively offers them a "pause" or a menu swap to prevent outright cancellation.
+
 ## Why Hugging Face fits
 
 - Hugging Face Jobs supports cloud jobs for data ingestion, processing, training, and inference workflows:

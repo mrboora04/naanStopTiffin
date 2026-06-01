@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text
+from sqlalchemy import Column, String, Text, Float, DateTime
 from database import Base
 
 
@@ -18,3 +18,11 @@ class Member(Base):
     allergies        = Column(Text,   default="")
     delivery_notes   = Column(Text,   default="")
     emergency_contact = Column(String, default="")
+
+    # ── Phase 3: Decision Tree Flash Sale features ────────────────────────────
+    lat                 = Column(Float,    nullable=True)   # GPS latitude  (for distance_km calc)
+    lng                 = Column(Float,    nullable=True)   # GPS longitude (for distance_km calc)
+    last_offer_accepted = Column(DateTime, nullable=True)   # Timestamp of last accepted flash sale
+    #   NULL  = never offered
+    #   Set   = model learns cadence, prevents daily spamming
+

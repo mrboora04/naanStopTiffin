@@ -34,6 +34,7 @@ from ai.dish_popularity import (
     get_dish_recommendation_for_member,
     train_dish_popularity_model,
 )
+from ai.food_story import get_food_story_for_date
 
 router = APIRouter()
 
@@ -329,6 +330,35 @@ def train_dish_model(
     return train_dish_popularity_model(db)
 
 
+
+
+# ── Food Story RAG Pipeline ─────────────────────────────────────────────────
+
+@router.get("/food-story", summary="Get the expert food story for today's tiffin")
+@limiter.limit("60/minute")
+def food_story(
+    request: Request,
+    date: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Returns an expert health story for a given day's tiffin batch.
+
+    The cook enters the key ingredients (e.g., "Turmeric, Spinach, Lentils")
+    when creating the schedule. This endpoint retrieves the nutritional and
+    Ayurvedic benefits of those ingredients and formats a short premium
+    "food story" to display to the customer in the app.
+
+    Results are cached to the database after the first generation — fast on repeat calls.
+
+    **Example:** `?date=2026-05-28` → Premium food story for May 28th's batch.
+    """
+    if not date or len(date) < 8:
+        raise HTTPException(status_code=400, detail="date must be an ISO date string (e.g., '2026-05-28').")
+    result = get_food_story_for_date(date=date, db=db)
+    if "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+    return result
 
 
 @router.post("/reindex", summary="Re-run AI indexing pipeline")

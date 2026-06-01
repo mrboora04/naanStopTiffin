@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Text, Boolean
+from sqlalchemy import Column, String, Integer, Text, Boolean, DateTime
 from database import Base
 
 
@@ -15,3 +15,10 @@ class Delivery(Base):
     notes         = Column(Text,    default="")
     day_of_week   = Column(String,  default="")     # monday|tuesday|... (logistic regression feature)
     was_late      = Column(Boolean, nullable=True)   # NULL=unlabeled | True=late | False=on-time (training label)
+
+    # ── Phase 2: Zero-Cost Delivery Telemetry ────────────────────────────────
+    # Driver clicks "Dispatch" → records departure. Driver clicks "Done" → records arrival.
+    # ML model computes actual_duration = (delivered_at - dispatched_at) automatically.
+    dispatched_at        = Column(DateTime, nullable=True)   # When driver leaves the kitchen
+    delivered_at         = Column(DateTime, nullable=True)   # When driver marks run complete
+    estimated_drive_time = Column(Integer,  nullable=True)   # Static OSRM estimate in minutes (set at route creation)

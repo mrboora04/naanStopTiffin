@@ -10,9 +10,14 @@ Changes from v0:
   - predict-delay moved to /api/v1/ai/delivery-predict
     (kept here as a redirect alias for backward compat during transition)
   - Rate limiting
+
+Phase 2 additions (Zero-Cost Delivery Telemetry):
+  - POST /{id}/dispatch  — records driver departure timestamp
+  - POST /{id}/complete  — records arrival + auto-labels was_late for ML training
 """
 
 import uuid
+from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
@@ -108,3 +113,66 @@ def delete_delivery(request: Request, delivery_id: str, db: Session = Depends(ge
         raise HTTPException(status_code=404, detail=f"Delivery '{delivery_id}' not found.")
     db.delete(obj)
     db.commit()
+
+
+# ── Phase 2: Zero-Cost Delivery Telemetry ─────────────────────────────────────
+
+@router.post("/{delivery_id}/dispatch", response_model=DeliveryOut, summary="Record driver dispatch time")
+@limiter.limit("100/minute")
+def dispatch_delivery(request: Request, delivery_id: str, db: Session = Depends(get_db)):
+    """
+    Records when the driver leaves the kitchen with the tiffins.
+
+    Call this at the moment the driver picks up the food.
+    Sets status to 'out-for-delivery' and stamps the dispatched_at timestamp.
+    This is the start of our zero-cost delivery timing window.
+    """
+    obj = db.query(Delivery).filter(Delivery.id == delivery_id).first()
+    if not obj:
+        raise HTTPException(status_code=404, detail=f"Delivery '{delivery_id}' not found.")
+    if obj.dispatched_at:
+        raise HTTPException(status_code=409, detail="Delivery already dispatched.")
+
+    obj.dispatched_at = datetime.now(timezone.utc)
+    obj.status        = "out-for-delivery"
+    db.commit()
+    db.refresh(obj)
+    return obj
+
+
+@router.post("/{delivery_id}/complete", response_model=DeliveryOut, summary="Record delivery completion + auto-label ML training data")
+@limiter.limit("100/minute")
+def complete_delivery(request: Request, delivery_id: str, db: Session = Depends(get_db)):
+    """
+    Records when the driver completes the full delivery run.
+
+    Automatically calculates actual duration (delivered_at - dispatched_at)
+    and compares it against estimated_drive_time to set was_late.
+    This auto-labels the row as an ML training data point — no manual labeling needed.
+
+    - was_late = True  if actual duration > estimated_drive_time * 1.2 (20% buffer)
+    - was_late = False if within the 20% tolerance buffer
+    - was_late = NULL  if estimated_drive_time was not set (still usable as timing data)
+    """
+    obj = db.query(Delivery).filter(Delivery.id == delivery_id).first()
+    if not obj:
+        raise HTTPException(status_code=404, detail=f"Delivery '{delivery_id}' not found.")
+    if obj.delivered_at:
+        raise HTTPException(status_code=409, detail="Delivery already marked as complete.")
+    if not obj.dispatched_at:
+        raise HTTPException(status_code=400, detail="Cannot complete a delivery that was never dispatched. Call /dispatch first.")
+
+    obj.delivered_at = datetime.now(timezone.utc)
+    obj.status       = "delivered"
+
+    # ── Auto-label was_late for ML training ──────────────────────────────────
+    actual_mins = (obj.delivered_at - obj.dispatched_at).total_seconds() / 60.0
+    if obj.estimated_drive_time and obj.estimated_drive_time > 0:
+        # 20% tolerance buffer — a 30-min route is only "late" if it took > 36 min
+        late_threshold = obj.estimated_drive_time * 1.2
+        obj.was_late   = actual_mins > late_threshold
+    # else: leave was_late as NULL — no estimate to compare against
+
+    db.commit()
+    db.refresh(obj)
+    return obj
