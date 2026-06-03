@@ -204,38 +204,46 @@ def _build_surplus_features(
 def _synthetic_training_data() -> tuple:
     """
     Bootstrap training data when we have fewer than MIN_ROWS real labeled rows.
-    Built from logical rules (not guesses) so the tree learns the right splits
-    even on Day 1 of the pilot:
-      — Nearby + diet match + liked before → accepted
-      — Far away + no match + spammed recently → declined
-    These rows will be replaced by real data as soon as MIN_ROWS is reached.
+    Generates 100 realistic rows based on business logic so the tree learns
+    proper splits (diet match, distance, spam cooldown) for demonstration.
     """
+    import random
+    random.seed(42) # For reproducible tree structure
+    
     FEATURE_COLS = [
         "diet_match", "distance_km", "past_dish_likes",
         "high_tipper", "driver_nearby", "days_since_offer", "day_of_week_encoded"
     ]
-    X = [
-        # accepted=1: close, right diet, liked before, driver nearby
-        [1, 0.8,  3, 1, 1, 10.0, 4],
-        [1, 1.2,  2, 0, 1, 14.0, 5],
-        [1, 0.5,  5, 1, 1,  7.0, 3],
-        [1, 1.5,  1, 1, 0, 20.0, 4],
-        [1, 2.0,  0, 0, 1,  5.0, 2],
-        [1, 0.9,  4, 1, 1, 30.0, 6],
-        [0, 0.6,  2, 1, 1,  8.0, 5],
-        [1, 1.1,  1, 0, 0, 12.0, 1],
-        # accepted=0: far, wrong diet, spammed recently, no history
-        [0, 8.0,  0, 0, 0,  0.5, 1],
-        [0, 5.5,  0, 0, 0,  1.0, 0],
-        [1, 6.0,  0, 0, 0,  0.3, 2],
-        [0, 9.0,  0, 0, 0,  1.5, 3],
-        [0, 4.5,  0, 0, 0,  0.8, 4],
-        [1, 7.0,  0, 0, 0,  1.2, 5],
-        [0, 3.5,  0, 0, 0,  0.1, 6],
-        [0, 10.0, 0, 0, 0,  0.4, 0],
-    ]
-    y = [1, 1, 1, 1, 1, 1, 1, 1,
-         0, 0, 0, 0, 0, 0, 0, 0]
+    X = []
+    y = []
+    
+    for _ in range(100):
+        diet_match = random.choice([0, 1])
+        distance_km = round(random.uniform(0.5, 12.0), 1)
+        past_dish_likes = random.randint(0, 5)
+        high_tipper = random.choice([0, 1])
+        driver_nearby = random.choice([0, 1])
+        days_since_offer = round(random.uniform(0.1, 20.0), 1)
+        day_of_week_encoded = random.randint(0, 6)
+
+        # Realistic logic for accept (1) or decline (0)
+        accepted = 0
+        if diet_match == 1:
+            if days_since_offer > 2.0:
+                if distance_km <= 6.0:
+                    if past_dish_likes > 0 or driver_nearby == 1:
+                        accepted = 1
+        
+        # Add 5% noise for realism
+        if random.random() < 0.05:
+            accepted = 1 if accepted == 0 else 0
+
+        X.append([
+            diet_match, distance_km, past_dish_likes, 
+            high_tipper, driver_nearby, days_since_offer, day_of_week_encoded
+        ])
+        y.append(accepted)
+        
     return X, y, FEATURE_COLS
 
 
