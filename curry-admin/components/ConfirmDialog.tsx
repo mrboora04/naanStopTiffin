@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,17 @@ export default function ConfirmDialog({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  // Keyboard accessibility: Escape to cancel, Enter to confirm
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.preventDefault(); onCancel(); }
+      if (e.key === "Enter")  { e.preventDefault(); onConfirm(); onCancel(); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open, onConfirm, onCancel]);
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onCancel()}>
       <DialogContent

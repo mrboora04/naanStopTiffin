@@ -18,7 +18,7 @@ export default function DishCard({
 
   return (
     <>
-      <div className="rounded-2xl overflow-hidden shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 bg-white hover:shadow-md transition-all cursor-pointer" onClick={onClick}>
+      <div className="rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-white card-hover cursor-pointer active:scale-[0.98] transition-transform" onClick={onClick}>
         <div className="relative p-6 pb-4">
           <div className="flex justify-between items-start mb-2">
             <h3 className="text-xl font-bold text-gray-900">{dish.name}</h3>

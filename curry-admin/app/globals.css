@@ -2,6 +2,11 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -116,6 +121,73 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
+
+/* ── Brand Design Tokens ──────────────────────────────────────────────────── */
+:root {
+  /* Brand primary: curry orange */
+  --color-primary:        #F97316;
+  --color-primary-hover:  #EA6A0A;
+  --color-primary-light:  #FFF7ED;
+  --color-primary-muted:  #FDBA74;
+
+  /* Semantic states */
+  --color-success:        #15803D;
+  --color-success-light:  #DCFCE7;
+  --color-warning:        #B45309;
+  --color-warning-light:  #FEF3C7;
+  --color-error:          #B91C1C;
+  --color-error-light:    #FEE2E2;
+  --color-info:           #1D4ED8;
+  --color-info-light:     #DBEAFE;
+
+  /* Neutral surfaces */
+  --color-surface:        #FFFFFF;
+  --color-surface-muted:  #F8FAFC;
+  --color-border-subtle:  #F1F5F9;
+  --color-border:         #E2E8F0;
+  --color-text:           #0F172A;
+  --color-text-muted:     #64748B;
+  --color-text-light:     #94A3B8;
+
+  /* Spacing scale (4px base) */
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+
+  /* Transition speed */
+  --transition-fast:    150ms ease;
+  --transition-base:    200ms ease;
+  --transition-slow:    300ms ease;
+}
+
+/* ── Reduced Motion Accessibility ──────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Micro-interaction Utilities ────────────────────────────────────────────── */
+.card-hover {
+  transition: box-shadow var(--transition-base), transform var(--transition-base);
+}
+.card-hover:hover {
+  box-shadow: 0 8px 30px rgba(0,0,0,0.10);
+  transform: translateY(-2px);
+}
+
+/* ── Status Badge Utilities ──────────────────────────────────────────────── */
+.badge-active   { background: var(--color-success-light); color: var(--color-success); }
+.badge-warning  { background: var(--color-warning-light); color: var(--color-warning); }
+.badge-error    { background: var(--color-error-light);   color: var(--color-error);   }
+.badge-info     { background: var(--color-info-light);    color: var(--color-info);    }
+.badge-muted    { background: var(--color-border-subtle); color: var(--color-text-muted); }
 
 @layer base {
   * {

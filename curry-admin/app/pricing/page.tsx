@@ -188,7 +188,7 @@ export default function Pricing() {
                       <span className="text-gray-500 font-medium">/{plan.type}</span>
                     </div>
                     <ul className="space-y-4 mb-8 flex-1">
-                      {plan.features.map((feature, idx) => (
+                      {(plan.features || []).map((feature, idx) => (
                         <li key={idx} className="flex items-center gap-3 text-gray-700 font-medium">
                           <div className="p-1 bg-green-100 text-green-700 rounded-full"><Check size={14} strokeWidth={3} /></div>
                           {feature}
