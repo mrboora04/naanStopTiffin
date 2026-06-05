@@ -41,4 +41,19 @@ Add an AI-powered floating chat assistant specifically for **cooks** in the kitc
 
 ---
 
+## KNN "Lone Bird" Growth Features
+
+**Requested:** 2026-06-05  
+**Status:** 📋 Idea Book — strong potential for future app integration
+
+### Concept
+Leveraging K-Nearest Neighbors (KNN) to build hyper-personalized discovery and recommendation features for "Lone Birds" (ad-hoc users who order outside of the standard subscription plans).
+
+### Use Cases to Explore
+1. **Cook Meal Rotation & Insights (Reverse-KNN):** Grouping the customer base of a specific cook to advise the cook on what to prep next. (e.g., "50% of your audience eats spicy food—add a spicy dish next week"). This guarantees the cook's new menu will sell out.
+2. **Budget Discovery Bar:** A filter specifically for student workers. KNN clusters them with cooks and meals that match the historical spending habits of their nearest demographic neighbors.
+3. **Seasonal Recommendations:** Recommending new cooks and seasonal schedules based on what similar Lone Bird users are currently exploring.
+
+---
+
 *This file was created as part of the June 2026 frontend audit. Revisit when the cook-side app is built out.*
