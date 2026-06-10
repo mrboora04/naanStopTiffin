@@ -54,11 +54,12 @@ You have a project or learning you want to **share widely**, and you want it to:
 
 Start with raw thoughts. Don't overthink structure yet.
 
-**Ask yourself:**
+**Ask human:**
 - What problem does this solve? (A—personal issue)
 - What tools/frameworks did I use? (W—work)
 - What research or concepts back this up? (E—experience)
 - What's the core idea? (T—topic)
+
 
 **Write rough answers to:**
 ```
